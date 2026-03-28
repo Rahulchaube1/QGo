@@ -1,3 +1,9 @@
+# Copyright (c) 2024 Rahul Chaube. All Rights Reserved.
+#
+# QGo — AI Coding Assistant
+# Author: Rahul Chaube
+# License: Apache-2.0
+
 """Unified-diff coder — LLM returns changes as standard unified diffs."""
 
 from __future__ import annotations

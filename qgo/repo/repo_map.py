@@ -1,3 +1,9 @@
+# Copyright (c) 2024 Rahul Chaube. All Rights Reserved.
+#
+# QGo — AI Coding Assistant
+# Author: Rahul Chaube
+# License: Apache-2.0
+
 """Repository mapper — builds a structured map of the codebase for LLM context.
 
 Uses regex-based symbol extraction (no external tree-sitter dependency)

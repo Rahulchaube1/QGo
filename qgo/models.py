@@ -1,3 +1,9 @@
+# Copyright (c) 2024 Rahul Chaube. All Rights Reserved.
+#
+# QGo — AI Coding Assistant
+# Author: Rahul Chaube
+# License: Apache-2.0
+
 """Data models and type definitions for QGo."""
 
 from __future__ import annotations

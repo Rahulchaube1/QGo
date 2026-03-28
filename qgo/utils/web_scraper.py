@@ -1,3 +1,9 @@
+# Copyright (c) 2024 Rahul Chaube. All Rights Reserved.
+#
+# QGo — AI Coding Assistant
+# Author: Rahul Chaube
+# License: Apache-2.0
+
 """Web scraper for QGo — fetches URLs and converts to clean text/Markdown."""
 
 from __future__ import annotations

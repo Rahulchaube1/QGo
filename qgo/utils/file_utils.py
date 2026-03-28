@@ -1,3 +1,9 @@
+# Copyright (c) 2024 Rahul Chaube. All Rights Reserved.
+#
+# QGo — AI Coding Assistant
+# Author: Rahul Chaube
+# License: Apache-2.0
+
 """File system utilities for QGo."""
 
 from __future__ import annotations

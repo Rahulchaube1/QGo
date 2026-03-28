@@ -1,22 +1,22 @@
 <div align="center">
 
-```
- ██████╗  ██████╗  ██████╗
-██╔═══██╗██╔════╝ ██╔═══██╗
-██║   ██║██║  ███╗██║   ██║
-██║▄▄ ██║██║   ██║██║   ██║
-╚██████╔╝╚██████╔╝╚██████╔╝
- ╚══▀▀═╝  ╚═════╝  ╚═════╝
-```
+<img src="assets/logo.svg" alt="QGo Logo" width="420"/>
 
 # QGo — The Most Advanced AI Coding Assistant
 
-**More powerful than Cursor. Smarter than Aider. Your AI pair-programmer that lives in your terminal.**
+**Created by [Rahul Chaube](https://github.com/Rahulchaube1)**
+
+**More powerful than Cursor. Smarter than Aider. Multi-Agent AI that lives in your terminal.**
 
 [![CI](https://github.com/Rahulchaube1/QGo/actions/workflows/ci.yml/badge.svg)](https://github.com/Rahulchaube1/QGo/actions/workflows/ci.yml)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache--2.0-green.svg)](LICENSE)
 [![Models: 50+](https://img.shields.io/badge/models-50+-purple.svg)](#-supported-models)
+[![Agents: 8](https://img.shields.io/badge/agents-8-orange.svg)](#-multi-agent-system)
+[![Copyright: Rahul Chaube](https://img.shields.io/badge/copyright-Rahul%20Chaube-blueviolet.svg)](#-copyright)
+
+> *"The AI coding assistant that thinks like a team of senior engineers."*
+> — Rahul Chaube
 
 </div>
 
@@ -30,6 +30,7 @@
 | 🗺️ **Repo Map** | Automatically maps your entire codebase so the AI understands structure and context |
 | ✏️ **Smart Editing** | 4 editing formats: SEARCH/REPLACE blocks, whole-file, unified diffs, architect mode |
 | 🏗️ **Architect Mode** | Two-pass: strong model plans → fast model implements |
+| 👥 **Multi-Agent System** | 8 specialist agents (Planner, Coder, Reviewer, Tester, Debugger, DocWriter, Security, Refactor) work collaboratively |
 | 🔀 **Git Integration** | Auto-commits, diffs, undo, branch management |
 | 🎨 **Beautiful UI** | Rich terminal output with syntax highlighting, Markdown rendering, live streaming |
 | 💬 **Interactive REPL** | Full-featured REPL with history, tab completion, multi-line input |
@@ -37,9 +38,68 @@
 | 📎 **Clipboard** | Paste clipboard content into the conversation (`/paste`) |
 | 🔍 **Auto Lint** | Automatically run your linter after each edit; ask AI to fix errors |
 | 🧪 **Auto Test** | Run your test suite and fix failures automatically |
+| 🔒 **Security Audit** | Dedicated security agent audits your code for vulnerabilities |
 | ⚙️ **Configurable** | Project-level `.qgo.conf` + user-level `~/.qgo.conf` + env vars |
 | 🔌 **Local Models** | Full Ollama support — run llama3, codellama, mistral, qwen locally |
 | 📦 **100+ Languages** | Python, JS/TS, Go, Rust, Java, C/C++, Ruby, PHP, Swift, Kotlin, and more |
+
+---
+
+## 👥 Multi-Agent System
+
+QGo's multi-agent system is what sets it apart. Instead of a single AI trying to do everything, QGo orchestrates a **team of 8 specialist agents** that collaborate like a real engineering team:
+
+```
+User Request
+     │
+     ▼
+┌─────────────┐     Plans sub-tasks
+│ 📋 PLANNER  │──────────────────────────────────────────────┐
+└─────────────┘                                              │
+                                                             ▼
+┌─────────┐  ┌──────────┐  ┌────────┐  ┌──────────┐  ┌──────────┐
+│⚙️ CODER │  │🔍 REVIEW │  │🧪 TEST │  │🐛 DEBUG  │  │🔒 SECURI-│
+│         │  │          │  │        │  │          │  │   TY     │
+└────┬────┘  └────┬─────┘  └───┬────┘  └────┬─────┘  └────┬─────┘
+     │             │            │             │              │
+     └─────────────┴────────────┴─────────────┴──────────────┘
+                                     │
+                              ┌──────▼──────┐
+                              │ 📝 DOC +    │
+                              │ ♻️ REFACTOR  │
+                              └──────┬──────┘
+                                     │
+                              ┌──────▼──────┐
+                              │  Final      │
+                              │  Report     │
+                              └─────────────┘
+```
+
+| Agent | Icon | Speciality |
+|-------|------|-----------|
+| **Planner** | 📋 | Decomposes tasks into ordered sub-tasks, assigns to specialists |
+| **Coder** | ⚙️ | Writes clean, production-quality code with type hints |
+| **Reviewer** | 🔍 | Reviews for correctness, performance, and best practices |
+| **Tester** | 🧪 | Writes comprehensive pytest suites with edge cases |
+| **Debugger** | 🐛 | Root-cause analysis and minimal bug fixes |
+| **DocWriter** | 📝 | Google-style docstrings, README sections, inline comments |
+| **Security** | 🔒 | Audits for injections, path traversal, exposed secrets, CVEs |
+| **Refactor** | ♻️ | Improves structure (DRY, SRP, naming) without breaking behaviour |
+
+### Multi-Agent Usage
+
+```bash
+# Run full multi-agent pipeline (auto-plans and executes)
+qgo agent "add authentication to the Flask API"
+
+# Run a specific agent directly
+qgo agent --agent coder "implement pagination for list_users()"
+qgo agent --agent security "audit auth.py for vulnerabilities"
+qgo agent --agent tester "write tests for the payment module"
+
+# Interactive: use /agent command in REPL
+[QGo] > /agent add rate limiting to the API
+```
 
 ---
 
@@ -252,6 +312,10 @@ stream: true
 
 ```
 qgo/
+├── agents/                 # Multi-agent orchestration system
+│   ├── orchestrator.py     # Coordinates all agents (AgentOrchestrator)
+│   ├── base_agent.py       # Abstract BaseAgent, AgentMessage, AgentResult
+│   └── specialist_agents.py # Planner, Coder, Reviewer, Tester, Debugger, DocWriter, Security, Refactor
 ├── llm/                    # Universal LLM backends
 │   ├── litellm_provider.py # 100+ models via litellm
 │   ├── model_info.py       # Model metadata & costs
@@ -318,6 +382,32 @@ Apache 2.0 — see [LICENSE](LICENSE) for details.
 
 ---
 
+## © Copyright
+
+**QGo** is created and maintained by **Rahul Chaube**.
+
+```
+Copyright (c) 2024 Rahul Chaube. All Rights Reserved.
+
+Licensed under the Apache License, Version 2.0.
+You may obtain a copy of the License at:
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Author:  Rahul Chaube
+GitHub:  https://github.com/Rahulchaube1
+Project: https://github.com/Rahulchaube1/QGo
+```
+
+All source files, documentation, assets, and configuration in this repository are the intellectual property of **Rahul Chaube**. The QGo name, logo, and branding are owned by Rahul Chaube.
+
+---
+
 <div align="center">
-<strong>QGo — Because your terminal deserves the best AI coding assistant.</strong>
+<img src="assets/logo.svg" alt="QGo" width="300"/>
+
+<br/>
+
+**QGo — The AI coding assistant built by Rahul Chaube.**
+
+*© 2024 Rahul Chaube. All Rights Reserved.*
 </div>
