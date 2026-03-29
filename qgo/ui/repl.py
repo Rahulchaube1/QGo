@@ -25,8 +25,8 @@ def _get_completer(coder: "BaseCoder"):
 
         commands = [
             "/add", "/drop", "/files", "/diff", "/commit", "/undo", "/clear",
-            "/model", "/models", "/tokens", "/map", "/run", "/web", "/git",
-            "/paste", "/ls", "/config", "/help", "/exit", "/quit",
+            "/model", "/models", "/tokens", "/map", "/run", "/web", "/browse",
+            "/image", "/git", "/paste", "/ls", "/config", "/help", "/exit", "/quit",
         ]
         # Add current files as completions for /add and /drop
         file_names = [str(fc.path.name) for fc in coder.chat_files]

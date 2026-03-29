@@ -53,6 +53,8 @@ class CommandHandler:
             "/map": self._cmd_map,
             "/run": self._cmd_run,
             "/web": self._cmd_web,
+            "/browse": self._cmd_browse,
+            "/image": self._cmd_image,
             "/git": self._cmd_git,
             "/paste": self._cmd_paste,
             "/ls": self._cmd_ls,
@@ -210,6 +212,69 @@ class CommandHandler:
                 self.io.print_warning("No content retrieved.")
         except Exception as exc:
             self.io.print_error(f"Failed to fetch URL: {exc}")
+
+    def _cmd_browse(self, args: str) -> None:
+        """Fetch and display a web page with rich browser-like formatting."""
+        if not args:
+            self.io.print_warning("Usage: /browse <url>")
+            return
+        url = args.strip()
+        if not url.startswith(("http://", "https://")):
+            url = "https://" + url
+        try:
+            from qgo.utils.web_scraper import fetch_page_info
+            self.io.print_info(f"Loading: {url}")
+            page_info = fetch_page_info(url)
+            self.io.print_browse(page_info)
+            content = page_info.get("content", "")
+            if content:
+                self.coder.messages.append({
+                    "role": "user",
+                    "content": f"Web page content from {url}:\n\n{content[:8000]}",
+                })
+                self.io.print_success(
+                    f"Page content added to context ({len(content):,} chars)."
+                )
+        except Exception as exc:
+            self.io.print_error(f"Failed to browse {url}: {exc}")
+
+    def _cmd_image(self, args: str) -> None:
+        """Attach one or more images (local path or URL) to the next message."""
+        if not args:
+            self.io.print_warning("Usage: /image <path_or_url> [path2 ...]")
+            return
+        for src in args.split():
+            src = src.strip()
+            if not src:
+                continue
+            p = Path(src)
+            if p.exists() and p.is_file():
+                # Encode local file as a base64 data URL
+                try:
+                    import base64
+                    ext = p.suffix.lower().lstrip(".")
+                    mime = {
+                        "jpg": "image/jpeg", "jpeg": "image/jpeg",
+                        "png": "image/png", "gif": "image/gif",
+                        "webp": "image/webp", "bmp": "image/bmp",
+                    }.get(ext, "image/png")
+                    data = base64.b64encode(p.read_bytes()).decode("ascii")
+                    data_url = f"data:{mime};base64,{data}"
+                    self.coder.pending_images.append(data_url)
+                    self.io.print_image_added(src, len(self.coder.pending_images))
+                except Exception as exc:
+                    self.io.print_error(f"Failed to load image {src}: {exc}")
+            elif src.startswith(("http://", "https://")):
+                # Remote image — pass URL directly (vision models support this)
+                self.coder.pending_images.append(src)
+                self.io.print_image_added(src, len(self.coder.pending_images))
+            else:
+                self.io.print_warning(f"Image not found: {src}")
+        count = len(self.coder.pending_images)
+        if count:
+            self.io.print_info(
+                f"  {count} image(s) queued — they will be sent with your next message."
+            )
 
     def _cmd_git(self, args: str) -> None:
         if not args:

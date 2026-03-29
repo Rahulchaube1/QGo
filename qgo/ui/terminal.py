@@ -216,6 +216,60 @@ class QGoIO:
             f"[qgo.info]Cost:[/] ${cost:.4f}"
         )
 
+    # ─── Browser view ─────────────────────────────────────────────────
+
+    def print_browse(self, page_info: dict) -> None:
+        """Display a rich browser-like view of a web page."""
+        url = page_info.get("url", "")
+        title = page_info.get("title", "") or "Untitled"
+        description = page_info.get("description", "")
+        headings: list = page_info.get("headings", [])
+        links: list = page_info.get("links", [])
+        status = page_info.get("status_code", 0)
+
+        # Address-bar / header panel
+        header = Text()
+        header.append("🌐  ", style="bold cyan")
+        header.append(f"{title}\n", style="bold white")
+        header.append(f"     {url}\n", style="dim blue underline")
+        if description:
+            header.append(f"\n     {description}\n", style="dim white italic")
+        if status:
+            color = "bold green" if status == 200 else "bold red"
+            header.append(f"\n     HTTP {status}", style=color)
+        self.console.print(
+            Panel(header, title="[bold cyan]Browser View[/]", border_style="cyan")
+        )
+
+        # Table of contents
+        if headings:
+            toc = Text()
+            for level, text in headings:
+                indent = "  " * (level - 1)
+                prefix = "#" * level + " "
+                style = "bold cyan" if level == 1 else ("cyan" if level == 2 else "white")
+                toc.append(f"{indent}{prefix}{text}\n", style=style)
+            self.console.print(
+                Panel(toc, title="📑  Table of Contents", border_style="blue")
+            )
+
+        # Links
+        if links:
+            link_text = Text()
+            for i, (text, href) in enumerate(links, 1):
+                link_text.append(f"  {i:2}. ", style="dim")
+                link_text.append(f"{text}", style="cyan")
+                link_text.append(f"  →  {href}\n", style="dim")
+            self.console.print(Panel(link_text, title="🔗  Links", border_style="blue"))
+
+    # ─── Image support ────────────────────────────────────────────────
+
+    def print_image_added(self, source: str, index: int) -> None:
+        """Print confirmation that an image has been queued for the next message."""
+        self.console.print(
+            f"[qgo.success]🖼   Image #{index} queued:[/] [dim]{source}[/]"
+        )
+
     def print_help(self) -> None:
         """Print the help text."""
         help_md = """\
@@ -235,7 +289,9 @@ class QGoIO:
 | `/tokens` | Show token usage |
 | `/map` | Show repository map |
 | `/run <cmd>` | Run shell command |
-| `/web <url>` | Fetch URL as context |
+| `/web <url>` | Fetch URL as plain text context |
+| `/browse <url>` | Open URL with browser-like view (title, TOC, links) |
+| `/image <path/url>` | Attach an image to the next message (vision models) |
 | `/git <cmd>` | Run git command |
 | `/paste` | Paste clipboard content |
 | `/ls [path]` | List directory files |
@@ -248,5 +304,6 @@ class QGoIO:
 - Press **Ctrl+C** to cancel current input
 - Press **Ctrl+D** to exit
 - Use `/add *.py` to add multiple files with glob patterns
+- Use `/image` before your question to send images to vision-capable models
 """
         self.console.print(Markdown(help_md))

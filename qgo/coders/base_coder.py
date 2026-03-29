@@ -113,6 +113,7 @@ class BaseCoder:
         self.chat_files: list[FileContext] = []
         self.messages: list[Message] = []
         self.total_usage = TokenUsage()
+        self.pending_images: list[str] = []  # Images queued for the next message
 
     # ─── File management ──────────────────────────────────────────────
 
@@ -164,14 +165,18 @@ class BaseCoder:
         """
         self.refresh_files()
 
-        # Build message list
-        messages = self._build_messages(user_message)
+        # Capture and clear any pending images
+        images = self.pending_images[:]
+        self.pending_images.clear()
+
+        # Build message list (include images in the current turn if any)
+        messages = self._build_messages(user_message, images=images or None)
 
         # Send to LLM
         response = self._send(messages)
 
-        # Record in history
-        self.messages.append(Message(role="user", content=user_message))
+        # Record in history (images attached to this user turn)
+        self.messages.append(Message(role="user", content=user_message, images=images))
         self.messages.append(Message(role="assistant", content=response))
 
         # Apply edits
@@ -218,7 +223,7 @@ class BaseCoder:
 
     # ─── Prompt building ──────────────────────────────────────────────
 
-    def _build_messages(self, user_message: str) -> list[dict]:
+    def _build_messages(self, user_message: str, images: list[str] | None = None) -> list[dict]:
         """Build the full message list to send to the LLM."""
         result: list[dict] = []
 
@@ -230,8 +235,14 @@ class BaseCoder:
         for msg in self.messages[-20:]:  # Keep last 20 messages
             result.append(msg.to_dict())
 
-        # Current user message
-        result.append({"role": "user", "content": user_message})
+        # Current user message — include images if any (vision models)
+        if images:
+            content: list = [{"type": "text", "text": user_message}]
+            for img in images:
+                content.append({"type": "image_url", "image_url": {"url": img}})
+            result.append({"role": "user", "content": content})
+        else:
+            result.append({"role": "user", "content": user_message})
         return result
 
     def _build_system_prompt(self) -> str:
