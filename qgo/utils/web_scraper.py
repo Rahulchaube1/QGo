@@ -95,7 +95,71 @@ def fetch_url(url: str, timeout: int = 15) -> str:
         return f"[Error fetching {url}: {exc}]"
 
 
-def _fetch_plain(url: str, timeout: int = 15) -> str:
+def fetch_page_info(url: str, timeout: int = 15) -> dict:
+    """Fetch a web page and return structured info for browser-view display.
+
+    Returns a dict with: url, title, description, status_code, headings, links, content.
+    """
+    result: dict = {
+        "url": url,
+        "title": "",
+        "description": "",
+        "status_code": 0,
+        "headings": [],
+        "links": [],
+        "content": "",
+    }
+    try:
+        import requests
+        from bs4 import BeautifulSoup
+
+        headers = {
+            "User-Agent": (
+                "Mozilla/5.0 (compatible; QGo/0.1; +https://github.com/Rahulchaube1/QGo)"
+            )
+        }
+        response = requests.get(url, headers=headers, timeout=timeout)
+        response.raise_for_status()
+        result["status_code"] = response.status_code
+
+        soup = BeautifulSoup(response.text, "html.parser")
+
+        # Title
+        if soup.title:
+            result["title"] = soup.title.get_text(strip=True)
+
+        # Meta description
+        meta = soup.find("meta", attrs={"name": "description"})
+        if meta and isinstance(meta, object) and hasattr(meta, "get"):
+            result["description"] = meta.get("content", "")  # type: ignore[union-attr]
+
+        # Headings (h1–h3, max 15)
+        headings: list[tuple[int, str]] = []
+        for tag in soup.find_all(["h1", "h2", "h3"]):
+            text = tag.get_text(strip=True)
+            if text:
+                headings.append((int(tag.name[1]), text))
+        result["headings"] = headings[:15]
+
+        # Links (max 20)
+        links: list[tuple[str, str]] = []
+        for a in soup.find_all("a", href=True)[:30]:
+            text = a.get_text(strip=True)
+            href = a["href"]
+            if text and href and not href.startswith("#") and len(links) < 20:
+                links.append((text[:60], href))
+        result["links"] = links
+
+        # Readable content (reuse existing fetch_url)
+        result["content"] = fetch_url(url, timeout)
+
+    except Exception as exc:
+        result["content"] = f"[Error loading {url}: {exc}]"
+
+    return result
+
+
+
     """Minimal fallback using only urllib (no requests/bs4)."""
     try:
         import urllib.request
