@@ -25,6 +25,11 @@ def fetch_url(url: str, timeout: int = 15) -> str:
         Empty string if fetching fails.
     """
     try:
+        _validate_url(url)
+    except ValueError as exc:
+        return f"[{exc}]"
+
+    try:
         import requests
         from bs4 import BeautifulSoup
 
@@ -95,6 +100,21 @@ def fetch_url(url: str, timeout: int = 15) -> str:
         return f"[Error fetching {url}: {exc}]"
 
 
+def _validate_url(url: str) -> None:
+    """Raise ValueError if *url* uses a disallowed scheme.
+
+    Only http and https are permitted to prevent SSRF via file://, ftp://,
+    gopher://, etc.
+    """
+    import urllib.parse
+
+    parsed = urllib.parse.urlparse(url)
+    if not parsed.scheme or parsed.scheme not in ("http", "https"):
+        raise ValueError(
+            f"Disallowed URL scheme {parsed.scheme!r}. Only http/https are permitted."
+        )
+
+
 def fetch_page_info(url: str, timeout: int = 15) -> dict:
     """Fetch a web page and return structured info for browser-view display.
 
@@ -109,6 +129,12 @@ def fetch_page_info(url: str, timeout: int = 15) -> dict:
         "links": [],
         "content": "",
     }
+    try:
+        _validate_url(url)
+    except ValueError as exc:
+        result["content"] = f"[{exc}]"
+        return result
+
     try:
         import requests
         from bs4 import BeautifulSoup
@@ -159,7 +185,7 @@ def fetch_page_info(url: str, timeout: int = 15) -> dict:
     return result
 
 
-
+def _fetch_plain(url: str, timeout: int = 15) -> str:
     """Minimal fallback using only urllib (no requests/bs4)."""
     try:
         import urllib.request
@@ -179,6 +205,11 @@ def fetch_image_base64(url: str, timeout: int = 15) -> str | None:
 
     For use with vision-capable models.
     """
+    try:
+        _validate_url(url)
+    except ValueError:
+        return None
+
     try:
         import base64
 

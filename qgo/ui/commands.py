@@ -9,6 +9,7 @@
 from __future__ import annotations
 
 import glob as glob_module
+import shlex
 import subprocess
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -62,6 +63,7 @@ class CommandHandler:
             "/help": self._cmd_help,
             "/exit": self._cmd_exit,
             "/quit": self._cmd_exit,
+            "/agent": self._cmd_agent,
         }.get(cmd)
 
         if handler:
@@ -175,8 +177,9 @@ class CommandHandler:
             self.io.print_warning("Usage: /run <shell command>")
             return
         try:
+            cmd = shlex.split(args)
             result = subprocess.run(
-                args, shell=True, capture_output=True, text=True, timeout=60
+                cmd, shell=False, capture_output=True, text=True, timeout=60
             )
             output = (result.stdout + result.stderr).strip()
             if output:
@@ -280,10 +283,10 @@ class CommandHandler:
         if not args:
             self.io.print_warning("Usage: /git <git subcommand>")
             return
-        cmd = f"git {args}"
         try:
+            cmd = ["git"] + shlex.split(args)
             result = subprocess.run(
-                cmd, shell=True, capture_output=True, text=True, timeout=30
+                cmd, shell=False, capture_output=True, text=True, timeout=30
             )
             output = (result.stdout + result.stderr).strip()
             if output:
@@ -324,6 +327,61 @@ class CommandHandler:
             self.io.print_info("\n".join(lines) if lines else "(empty)")
         except PermissionError:
             self.io.print_error(f"Permission denied: {path}")
+
+    def _cmd_agent(self, args: str) -> None:
+        """Run the multi-agent pipeline (or a single named agent).
+
+        Usage:
+            /agent <task description>
+            /agent --agent coder <task description>
+        """
+        if not args:
+            self.io.print_warning(
+                "Usage: /agent [--agent <name>] <task description>\n"
+                "Available agents: planner, coder, reviewer, tester, "
+                "debugger, doc_writer, security, refactor"
+            )
+            return
+
+        # Parse optional --agent flag
+        agent_name: str | None = None
+        task = args
+        parts = args.split(maxsplit=2)
+        if len(parts) >= 2 and parts[0] == "--agent":
+            agent_name = parts[1]
+            task = parts[2] if len(parts) > 2 else ""
+            if not task:
+                self.io.print_warning("Please provide a task description after --agent <name>.")
+                return
+
+        try:
+            from qgo.agents.orchestrator import AgentOrchestrator
+
+            files = {
+                str(fc.path): fc.content
+                for fc in self.coder.chat_files
+            }
+            orchestrator = AgentOrchestrator(
+                llm=self.coder.llm,
+                config=self.coder.config,
+                io=self.io,
+            )
+            if agent_name:
+                result = orchestrator.run_single(agent_name, task, context={"files": files})
+                report = result.output if result.success else f"Agent error: {result.error}"
+            else:
+                report = orchestrator.run(task, files=files)
+
+            self.io.print_assistant(report)
+            # Add the report to conversation context
+            self.coder.messages.append({
+                "role": "assistant",
+                "content": report,
+            })
+        except ValueError as exc:
+            self.io.print_error(str(exc))
+        except Exception as exc:
+            self.io.print_error(f"Multi-agent pipeline error: {exc}")
 
     def _cmd_config(self, args: str) -> None:
         self.io.print_info(str(self.coder.config))

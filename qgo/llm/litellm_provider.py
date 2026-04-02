@@ -153,6 +153,10 @@ class LiteLLMProvider(BaseLLM):
                 wait = 2 ** attempt
                 time.sleep(wait)
                 last_error = e
+            except litellm.exceptions.Timeout as e:
+                wait = 2 ** attempt
+                time.sleep(wait)
+                last_error = e
             except Exception as e:
                 raise e
 

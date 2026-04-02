@@ -205,6 +205,31 @@ class BaseCoder:
 
     def _send(self, messages: list[dict]) -> str:
         """Send messages to the LLM and return the complete response."""
+        # Warn if the estimated token count approaches the context window
+        try:
+            def _content_text(content) -> str:
+                if isinstance(content, str):
+                    return content
+                if isinstance(content, list):
+                    return " ".join(
+                        p.get("text", "") for p in content if isinstance(p, dict)
+                    )
+                return ""
+
+            estimated = sum(
+                self.llm.count_tokens(_content_text(m.get("content")))
+                for m in messages
+            )
+            limit = self.llm.context_window
+            if estimated > limit * 0.9:
+                self._warn(
+                    f"⚠️  Context is ~{estimated:,} tokens, close to the "
+                    f"{limit:,}-token limit for {self.llm.model_name}. "
+                    "Consider using /drop to remove files or /clear to reset history."
+                )
+        except Exception:
+            pass  # Token estimation is best-effort; never block the request
+
         stream = self.config.stream
 
         if stream and self.io:
