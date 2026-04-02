@@ -296,6 +296,7 @@ class QGoIO:
 | `/paste` | Paste clipboard content |
 | `/ls [path]` | List directory files |
 | `/config` | Show current config |
+| `/agent [--agent <name>] <task>` | Run multi-agent pipeline (or a specific agent) |
 | `/help` | Show this help |
 | `/exit` or `/quit` | Exit QGo |
 
@@ -305,5 +306,6 @@ class QGoIO:
 - Press **Ctrl+D** to exit
 - Use `/add *.py` to add multiple files with glob patterns
 - Use `/image` before your question to send images to vision-capable models
+- Use `/agent` to dispatch complex tasks to the full multi-agent pipeline
 """
         self.console.print(Markdown(help_md))
